@@ -40,12 +40,14 @@ func ConvertSprintIssues(taskCtx plugin.SubTaskContext) errors.Error {
 	db := taskCtx.GetDal()
 	data := taskCtx.GetData().(*JiraTaskData)
 
-	jiraSprintIssue := &models.JiraSprintIssue{}
 	// select all issues belongs to the board
 	clauses := []dal.Clause{
-		dal.Select("*"),
-		dal.From(jiraSprintIssue),
-		dal.Where("_tool_jira_sprint_issues.connection_id = ? ", data.Options.ConnectionId),
+		dal.Select("tjsi.*"),
+		dal.From("_tool_jira_sprint_issues tjsi"),
+		dal.Join(`LEFT JOIN _tool_jira_board_sprints tjbs
+              ON tjbs.sprint_id = tjsi.sprint_id
+                 AND tjbs.connection_id = tjsi.connection_id`),
+		dal.Where("tjsi.connection_id = ? AND tjbs.board_id = ?", data.Options.ConnectionId, data.Options.BoardId),
 	}
 	cursor, err := db.Cursor(clauses...)
 	if err != nil {

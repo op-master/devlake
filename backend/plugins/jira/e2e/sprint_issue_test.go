@@ -37,12 +37,38 @@ func TestSprintIssueDataFlow(t *testing.T) {
 		},
 	}
 	dataflowTester.ImportCsvIntoTabler("./snapshot_tables/_tool_jira_sprint_issues.csv", models.JiraSprintIssue{})
+	dataflowTester.ImportCsvIntoTabler("./snapshot_tables/_tool_jira_board_sprints.csv", &models.JiraBoardSprint{})
 	dataflowTester.FlushTabler(ticket.SprintIssue{})
 	dataflowTester.Subtask(tasks.ConvertSprintIssuesMeta, taskData)
 
 	dataflowTester.VerifyTable(
 		ticket.SprintIssue{},
 		"./snapshot_tables/sprint_issues.csv",
+		[]string{
+			"sprint_id",
+			"issue_id",
+		},
+	)
+}
+
+func TestSprintIssueBoardScopeDataFlow(t *testing.T) {
+	var plugin impl.Jira
+	dataflowTester := e2ehelper.NewDataFlowTester(t, "jira", plugin)
+
+	taskData := &tasks.JiraTaskData{
+		Options: &tasks.JiraOptions{
+			ConnectionId: 2,
+			BoardId:      8,
+		},
+	}
+	dataflowTester.ImportCsvIntoTabler("./snapshot_tables/_tool_jira_sprint_issues_for_board_scope.csv", models.JiraSprintIssue{})
+	dataflowTester.ImportCsvIntoTabler("./snapshot_tables/_tool_jira_board_sprints_for_board_scope.csv", &models.JiraBoardSprint{})
+	dataflowTester.FlushTabler(ticket.SprintIssue{})
+	dataflowTester.Subtask(tasks.ConvertSprintIssuesMeta, taskData)
+
+	dataflowTester.VerifyTable(
+		ticket.SprintIssue{},
+		"./snapshot_tables/sprint_issues_for_board_scope.csv",
 		[]string{
 			"sprint_id",
 			"issue_id",
